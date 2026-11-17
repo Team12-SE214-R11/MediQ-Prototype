@@ -264,7 +264,7 @@ export function QuestionCard({ post, compact }: { post: Post; compact?: boolean 
   const answered = hasDoctorAnswer(db, post.id)
   return (
     <article className={cn('group relative rounded-lg border border-neutral-200 bg-white p-4 shadow-sm transition-shadow duration-150 focus-within:border-primary-200 hover:border-primary-200 hover:shadow-md md:p-6', answered && 'border-l-4 border-l-teal-600')}>
-      <div className="flex items-start justify-between gap-3">
+      <div className="relative z-10 flex items-start justify-between gap-3">
         <AuthorLine account={author} date={post.createdAt} edited={!!post.editedAt} />
         <BookmarkButton postId={post.id} compact />
       </div>
@@ -464,9 +464,12 @@ export function StatusBadge({ status, override }: { status: string; override?: s
 // ---------- Report ----------
 const REPORT_CATEGORIES = ['Quảng cáo thuốc, sản phẩm không rõ nguồn gốc', 'Thông tin y tế sai lệch', 'Giả mạo hoặc lừa đảo', 'Ngôn từ thù địch, quấy rối', 'Khác']
 
-export function ReportButton({ targetType, targetId, compact }: { targetType: ReportTargetType; targetId: string; compact?: boolean }) {
+/** Có thể dùng độc lập (kèm nút) hoặc điều khiển từ ngoài (`controlledOpen` + `noTrigger`) khi nút kích hoạt nằm trong menu tự đóng. */
+export function ReportButton({ targetType, targetId, compact, controlledOpen, onControlledClose, noTrigger }: { targetType: ReportTargetType; targetId: string; compact?: boolean; controlledOpen?: boolean; onControlledClose?: () => void; noTrigger?: boolean }) {
   const me = useCurrentUser()
-  const [open, setOpen] = useState(false)
+  const [innerOpen, setInnerOpen] = useState(false)
+  const open = controlledOpen ?? innerOpen
+  const setOpen = (v: boolean) => (controlledOpen === undefined ? setInnerOpen(v) : !v && onControlledClose?.())
   const [category, setCategory] = useState(REPORT_CATEGORIES[0])
   const [reason, setReason] = useState('')
   const { run, loading, error } = useAction()
@@ -481,10 +484,12 @@ export function ReportButton({ targetType, targetId, compact }: { targetType: Re
   }
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-md px-2 text-body-md font-semibold text-neutral-700 hover:bg-neutral-100" aria-label="Báo cáo vi phạm">
-        <Flag className="size-5" aria-hidden />
-        {!compact && 'Báo cáo'}
-      </button>
+      {!noTrigger && (
+        <button type="button" onClick={() => setOpen(true)} className="inline-flex h-11 items-center gap-2 rounded-md px-2 text-body-md font-semibold text-neutral-700 hover:bg-neutral-100" aria-label="Báo cáo vi phạm">
+          <Flag className="size-5" aria-hidden />
+          {!compact && 'Báo cáo'}
+        </button>
+      )}
       <Modal open={open} onClose={() => setOpen(false)} title="Báo cáo vi phạm" size="sm"
         footer={<><Button variant="outline" onClick={() => setOpen(false)}>Huỷ</Button><Button variant="danger" loading={loading} onClick={submit}>Gửi báo cáo</Button></>}>
         <fieldset className="space-y-1">
@@ -613,6 +618,7 @@ function CommentItem({ comment, all, level }: { comment: Comment; all: Comment[]
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(comment.body)
   const [menu, setMenu] = useState(false)
+  const [reporting, setReporting] = useState(false)
   const { run, loading } = useAction()
   const mine = me?.id === comment.authorId
   const canInteract = !!me && me.role !== 'ADMIN'
@@ -648,7 +654,7 @@ function CommentItem({ comment, all, level }: { comment: Comment; all: Comment[]
                 <ul className="absolute right-0 z-[500] w-48 rounded-md border border-neutral-200 bg-white py-1 shadow-md" onClick={() => setMenu(false)}>
                   {mine && <li><button type="button" className="flex h-11 w-full items-center gap-2 px-3 text-body-md hover:bg-neutral-100" onClick={() => { setDraft(comment.body); setEditing(true) }}><Pencil className="size-4" />Chỉnh sửa</button></li>}
                   {mine && <li><button type="button" className="flex h-11 w-full items-center gap-2 px-3 text-body-md text-danger-700 hover:bg-neutral-100" onClick={remove}><Trash2 className="size-4" />Xoá</button></li>}
-                  {!mine && <li className="px-1"><ReportButton targetType="comment" targetId={comment.id} /></li>}
+                  {!mine && me?.role !== 'ADMIN' && <li><button type="button" className="flex h-11 w-full items-center gap-2 px-3 text-body-md hover:bg-neutral-100" onClick={() => setReporting(true)}><Flag className="size-4" />Báo cáo</button></li>}
                 </ul>
               )}
             </div>
@@ -677,6 +683,7 @@ function CommentItem({ comment, all, level }: { comment: Comment; all: Comment[]
           <RevisionButton targetType="comment" targetId={comment.id} />
           <AdminRemoveButton targetType="comment" targetId={comment.id} />
         </div>
+        <ReportButton targetType="comment" targetId={comment.id} noTrigger controlledOpen={reporting} onControlledClose={() => setReporting(false)} />
         {replying && <div className="mt-3"><CommentComposer postId={comment.postId} parentId={comment.id} onDone={() => setReplying(false)} autoFocus /></div>}
       </div>
       {replies.length > 0 && (

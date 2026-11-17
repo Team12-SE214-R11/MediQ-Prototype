@@ -15,7 +15,7 @@ function Heading({ title, children }: { title: string; children?: React.ReactNod
   )
 }
 
-function PasswordInput({ value, onChange, label, error, autoComplete }: { value: string; onChange: (v: string) => void; label: string; error?: string | null; autoComplete: string }) {
+export function PasswordInput({ value, onChange, label, error, autoComplete }: { value: string; onChange: (v: string) => void; label: string; error?: string | null; autoComplete: string }) {
   const [show, setShow] = useState(false)
   return (
     <TextInput label={label} required type={show ? 'text' : 'password'} value={value} onChange={(e) => onChange(e.target.value)} error={error} autoComplete={autoComplete}
@@ -32,7 +32,7 @@ function Rule({ ok, children }: { ok: boolean; children: React.ReactNode }) {
 }
 
 /** Thước độ mạnh luôn kèm nhãn chữ, không chỉ dựa vào màu. */
-function PasswordStrength({ password }: { password: string }) {
+export function PasswordStrength({ password }: { password: string }) {
   const c = passwordChecks(password)
   const level = !password ? null : c.strong ? { label: 'Mạnh', color: 'bg-success-600', n: 10 } : c.valid ? { label: 'Trung bình', color: 'bg-warning-600', n: 7 } : c.passed <= 2 ? { label: 'Yếu', color: 'bg-danger-600', n: 3 } : { label: 'Chưa đạt', color: 'bg-warning-600', n: 5 }
   return (

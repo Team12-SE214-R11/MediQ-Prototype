@@ -277,6 +277,8 @@ export function AppLayout() {
       {/* Desktop: GlobalHeader 64px */}
       <header className="sticky top-0 z-[100] hidden h-16 border-b border-neutral-200 bg-white shadow-sm md:block">
         <div className="mx-auto flex h-full max-w-[1440px] items-center gap-4 px-8 2xl:px-20">
+          {/* 768–1023px: SideNav chưa hiện (từ 1024px) và thanh trên mobile đã ẩn, nên cần hamburger mở Drawer menu. */}
+          {!admin && <IconButton label="Mở menu" className="-ml-2 lg:hidden" onClick={() => setDrawer(true)}><Menu className="size-6" /></IconButton>}
           <Link to={admin ? '/admin' : '/'} aria-label="MediQ — Trang chủ" className="mr-4"><Logo /></Link>
           {admin ? (
             <>
@@ -285,8 +287,8 @@ export function AppLayout() {
             </>
           ) : (
             <>
-              <SearchBox className="w-[420px] max-w-full" />
-              <span className="flex-1" />
+              <SearchBox className="w-[420px] max-w-full min-w-0 flex-1 lg:flex-none" />
+              <span className="hidden flex-1 lg:block" />
               <Button icon={<Plus className="size-4" />} onClick={() => navigate('/questions/new')}>Đặt câu hỏi</Button>
               {me.role === 'VERIFIED_DOCTOR' && <Button variant="secondary" icon={<PenLine className="size-4" />} onClick={() => navigate('/articles/new')}>Viết bài</Button>}
               <BellButton popover />

@@ -277,6 +277,14 @@ export const api = {
   logout() {
     useStore.setState({ sessionUserId: null, pending2FA: null })
   },
+  /** Đổi mật khẩu khi đang đăng nhập: phải đúng mật khẩu hiện tại, mật khẩu mới đạt NFR-04.2 và khác mật khẩu cũ. */
+  changePassword(current: string, next: string) {
+    const me = requireUser()
+    checkPassword(me, current)
+    api._checkPassword(next)
+    if (next === current) invalid('Mật khẩu mới phải khác mật khẩu hiện tại.')
+    mutate((db) => (accountById(db, me.id)!.password = next))
+  },
   resetPassword(email: string, password: string) {
     api._checkPassword(password)
     mutate((db) => {

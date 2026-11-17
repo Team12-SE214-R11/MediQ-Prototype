@@ -4,7 +4,8 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { ArticleCard, Disclaimer, DoctorBadge, QuestionCard, ReportButton } from '../components/domain'
 import { Avatar, Badge, Breadcrumb, Button, Card, EmptyState, ErrorBanner, InfoBox, Modal, SkeletonList, TextInput, Textarea, toast, useAction, useFakeLoading } from '../components/ui'
 import { NotFoundPage } from '../layouts'
-import { LIMITS, cn, formatDate, maskEmail, maskLicense, readImageFile, timeAgo } from '../lib/utils'
+import { PasswordInput, PasswordStrength } from './auth'
+import { LIMITS, cn, formatDate, maskEmail, maskLicense, passwordChecks, readImageFile, timeAgo } from '../lib/utils'
 import { api, call, doctorProfileOf, isVerifiedDoctor, scoreOf, useCurrentUser, useDb } from '../mock/store'
 
 const NARROW = 'mx-auto max-w-[845px]'
@@ -248,7 +249,7 @@ export function DoctorProfilePage() {
 }
 
 // ---------- WF-USR-05 ----------
-const SECTIONS = [['password', 'Mật khẩu'], ['2fa', 'Xác thực 2 yếu tố'], ['passkey', 'Passkey'], ['danger', 'Vùng nguy hiểm']] as const
+const SECTIONS = [['password', 'Đổi mật khẩu'], ['2fa', 'Xác thực 2 yếu tố'], ['passkey', 'Passkey'], ['danger', 'Vùng nguy hiểm']] as const
 const TOTP_SECRET = 'JBSW Y3DP EHPK 3PXP'
 
 export function SecurityPage() {
@@ -260,6 +261,10 @@ export function SecurityPage() {
   const [del, setDel] = useState(false)
   const [delPw, setDelPw] = useState('')
   const twofa = useAction()
+  const pwAction = useAction()
+  const [curPw, setCurPw] = useState('')
+  const [newPw, setNewPw] = useState('')
+  const [newPw2, setNewPw2] = useState('')
   const remove = useAction()
   if (!me) return <Navigate to="/login" replace />
 
@@ -270,6 +275,16 @@ export function SecurityPage() {
       setSetup(false)
       setPw('')
       setCode('')
+    }
+  }
+  const changePassword = async (e: FormEvent) => {
+    e.preventDefault()
+    const ok = await pwAction.run(() => call(() => { api.changePassword(curPw, newPw); return true }), { silent: true })
+    if (ok) {
+      toast.success('Đã đổi mật khẩu')
+      setCurPw('')
+      setNewPw('')
+      setNewPw2('')
     }
   }
   const deleteAccount = async () => {
@@ -290,8 +305,19 @@ export function SecurityPage() {
         </nav>
         <div className="space-y-6 lg:col-span-8">
           <Card id="password">
-            <h2 className="text-h4 font-semibold">1. Mật khẩu</h2>
-            <p className="mt-2 text-body-md text-neutral-700">Nếu quên mật khẩu, hãy đăng xuất và dùng "Quên mật khẩu" ở trang đăng nhập.</p>
+            <h2 className="text-h4 font-semibold">1. Đổi mật khẩu</h2>
+            <form onSubmit={changePassword} className="mt-4 space-y-6" noValidate>
+              {pwAction.error && pwAction.error.code !== 'INVALID_PASSWORD' && <ErrorBanner message={pwAction.error.message} />}
+              <PasswordInput label="Mật khẩu hiện tại" value={curPw} onChange={setCurPw} autoComplete="current-password" error={pwAction.error?.code === 'INVALID_PASSWORD' ? pwAction.error.message : null} />
+              <div><PasswordInput label="Mật khẩu mới" value={newPw} onChange={setNewPw} autoComplete="new-password" /><PasswordStrength password={newPw} /></div>
+              <div>
+                <PasswordInput label="Nhập lại mật khẩu mới" value={newPw2} onChange={setNewPw2} autoComplete="new-password" error={newPw2 && newPw !== newPw2 ? 'Hai mật khẩu chưa khớp nhau.' : null} />
+              </div>
+              <div className="flex justify-end">
+                <Button type="submit" loading={pwAction.loading} disabled={!curPw || !passwordChecks(newPw).valid || newPw !== newPw2}>Đổi mật khẩu</Button>
+              </div>
+            </form>
+            <p className="mt-4 text-caption text-neutral-700">Quên mật khẩu hiện tại? Hãy đăng xuất và dùng "Quên mật khẩu" ở trang đăng nhập.</p>
           </Card>
 
           <Card id="2fa">
