@@ -28,6 +28,7 @@ import {
 import { type FormEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate, useSearchParams } from 'react-router'
 import { DoctorBadge } from './components/domain'
+import { Footer } from './components/footer'
 import { Avatar, Button, Drawer, IconButton, Modal } from './components/ui'
 import { NotificationItem } from './pages/notifications'
 import { cn, formatDate } from './lib/utils'
@@ -81,9 +82,7 @@ export function AuthLayout() {
           <Outlet />
         </div>
       </main>
-      <footer className="flex flex-wrap justify-center gap-x-6 gap-y-2 border-t border-neutral-200 bg-white px-4 py-4 text-body-md text-neutral-700">
-        <span>Điều khoản</span><span>Chính sách quyền riêng tư</span><span>Miễn trừ trách nhiệm y tế</span>
-      </footer>
+      <Footer variant="auth" />
     </div>
   )
 }
@@ -311,9 +310,7 @@ export function AppLayout() {
         <Outlet />
       </main>
 
-      <footer className="hidden bg-primary-950 px-8 py-8 text-body-md text-primary-300 md:block 2xl:px-20">
-        <p className="mx-auto max-w-[1280px]">MediQ — Mạng xã hội Hỏi & Đáp Y tế. Nội dung chỉ mang tính tham khảo, không thay thế chẩn đoán y khoa trực tiếp.</p>
-      </footer>
+      <Footer variant="app" admin={admin} clearBottomNav={!hideBottomNav} />
 
       {!hideBottomNav && <BottomNav />}
       <Drawer open={drawer} onClose={() => setDrawer(false)} title="Menu" side="left">
