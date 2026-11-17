@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { LIMITS, excerpt, uid } from '../lib/utils'
+import { LIMITS, SPECIAL_CHARS, excerpt, passwordChecks, uid } from '../lib/utils'
 import type {
   Account,
   Comment,
@@ -36,7 +36,7 @@ interface State {
 }
 
 export const useStore = create<State>()(
-  persist((): State => ({ db: createSeed(), sessionUserId: null, pending2FA: null }), { name: 'mediq-prototype-v1' }),
+  persist((): State => ({ db: createSeed(), sessionUserId: null, pending2FA: null }), { name: 'mediq-prototype-v2' }),
 )
 
 const get = () => useStore.getState()
@@ -208,6 +208,7 @@ export const api = {
   register(input: { email: string; username: string; displayName: string; password: string }) {
     const email = input.email.trim().toLowerCase()
     const username = input.username.trim()
+    api._checkPassword(input.password)
     mutate((db) => {
       if (db.accounts.some((a) => a.email === email)) throw new ApiError(409, 'EMAIL_TAKEN', 'Email này đã được đăng ký.')
       if (db.accounts.some((a) => a.username === username)) throw new ApiError(409, 'USERNAME_TAKEN', 'Tên đăng nhập đã tồn tại.')
@@ -217,6 +218,11 @@ export const api = {
       })
     })
     return email
+  },
+  /** NFR-04.2: một mã lỗi duy nhất cho mọi điều kiện của chính sách mật khẩu. */
+  _checkPassword(password: string) {
+    if (!passwordChecks(password).valid)
+      throw new ApiError(422, 'PASSWORD_POLICY_VIOLATION', `Mật khẩu cần 8–64 ký tự, gồm chữ thường, chữ hoa, chữ số và ký tự đặc biệt (${SPECIAL_CHARS}).`)
   },
   verifyEmail(email: string) {
     mutate((db) => {
@@ -272,6 +278,7 @@ export const api = {
     useStore.setState({ sessionUserId: null, pending2FA: null })
   },
   resetPassword(email: string, password: string) {
+    api._checkPassword(password)
     mutate((db) => {
       const acc = db.accounts.find((a) => a.email === email.trim().toLowerCase())
       if (acc && acc.status !== 'DELETED') acc.password = password

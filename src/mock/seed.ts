@@ -2,7 +2,7 @@ import { placeholderImage } from '../lib/utils'
 import type { Account, Comment, Database, Post, Revision } from '../types'
 
 // Dữ liệu mẫu cho prototype. Mật khẩu dùng chung cho mọi tài khoản demo (xem README).
-export const DEMO_PASSWORD = 'mediq123'
+export const DEMO_PASSWORD = 'MediQ@1234'
 
 const ago = (minutes: number) => new Date(Date.now() - minutes * 60_000).toISOString()
 const H = 60

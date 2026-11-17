@@ -34,7 +34,7 @@ function Rule({ ok, children }: { ok: boolean; children: React.ReactNode }) {
 /** Thước độ mạnh luôn kèm nhãn chữ, không chỉ dựa vào màu. */
 function PasswordStrength({ password }: { password: string }) {
   const c = passwordChecks(password)
-  const level = !password ? null : c.score <= 2 ? { label: 'Yếu', color: 'bg-danger-600', n: 3 } : c.score <= 3 ? { label: 'Trung bình', color: 'bg-warning-600', n: 6 } : { label: 'Mạnh', color: 'bg-success-600', n: 10 }
+  const level = !password ? null : c.strong ? { label: 'Mạnh', color: 'bg-success-600', n: 10 } : c.valid ? { label: 'Trung bình', color: 'bg-warning-600', n: 7 } : c.passed <= 2 ? { label: 'Yếu', color: 'bg-danger-600', n: 3 } : { label: 'Chưa đạt', color: 'bg-warning-600', n: 5 }
   return (
     <div className="mt-2 text-caption">
       <div className="flex items-center gap-2">
@@ -46,8 +46,10 @@ function PasswordStrength({ password }: { password: string }) {
       </div>
       <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
         <Rule ok={c.length}>{LIMITS.passwordMin}–{LIMITS.passwordMax} ký tự</Rule>
-        <Rule ok={c.letter}>Có chữ cái</Rule>
+        <Rule ok={c.lower}>Có chữ thường</Rule>
+        <Rule ok={c.upper}>Có chữ hoa</Rule>
         <Rule ok={c.digit}>Có chữ số</Rule>
+        <Rule ok={c.special}>Có ký tự đặc biệt</Rule>
       </ul>
     </div>
   )

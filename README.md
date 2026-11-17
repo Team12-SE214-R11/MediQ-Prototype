@@ -1,6 +1,6 @@
 # MediQ — Prototype
 
-Prototype giao diện thuần frontend của MediQ, chạy bằng dữ liệu giả lưu trong `localStorage`, bao phủ 33 màn hình trong [Screen-Inventory](../MediQ-Docs/System-Analysis-And-Design/06-UX-UI-Design/03-Wireframes/Screen-Inventory.md). Không có backend.
+Prototype giao diện thuần frontend của MediQ, chạy bằng dữ liệu giả lưu trong `localStorage`, bao phủ 33 màn hình trong [Screen-Inventory](https://github.com/Team12-SE214-R11/MediQ-Docs/System-Analysis-And-Design/06-UX-UI-Design/03-Wireframes/Screen-Inventory.md). Không có backend.
 
 - Stack: React 19, TypeScript, Vite 8, Tailwind CSS v4 (token khai báo bằng `@theme` trong `src/styles/index.css`), React Router 7, Zustand.
 - Token màu, kiểu chữ, bo góc, đổ bóng lấy từ `04-Design-System/Design-Tokens.md`; bảng màu mặc định của Tailwind đã bị xoá để không lọt giá trị ngoài token.
@@ -16,7 +16,7 @@ Mở `http://localhost:5173`. Các lệnh khác: `pnpm build`, `pnpm lint`.
 
 ## Tài khoản demo
 
-Mật khẩu chung: `mediq123`.
+Mật khẩu chung: `MediQ@1234`.
 
 | Email | Vai trò | Ghi chú |
 | :--- | :--- | :--- |
@@ -30,6 +30,7 @@ Nút **Demo** ở góc dưới trái đổi nhanh vai trò (kể cả tài kho�
 
 Logic nằm trong `src/mock/store.ts`, tên nhóm hàm bám theo nhóm API của SRS:
 
+- Chính sách mật khẩu NFR-04.2: 8–64 ký tự, có chữ thường, chữ hoa, chữ số và ký tự đặc biệt thuộc tập 19 ký tự `! @ # $ % ^ & * , . / < > ? - _ = + ~`; vi phạm trả 422 `PASSWORD_POLICY_VIOLATION` (một mã duy nhất).
 - Guest không xem công khai: mọi nội dung chuyển về `/login?redirect=…`.
 - Chỉ Verified Doctor tạo Article (BR-06); chỉ chính chủ sửa và xoá (BR-07); Admin chỉ đọc và chỉ có nút "Xoá nội dung" (BR-03).
 - Huy hiệu bác sĩ tính lúc hiển thị, mất ngay khi bị thu hồi (BR-05).

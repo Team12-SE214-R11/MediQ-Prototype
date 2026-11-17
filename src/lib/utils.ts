@@ -76,12 +76,20 @@ export function maskLicense(license: string): string {
   return `********${license.replace(/\D/g, '').slice(-4)}`
 }
 
+/** Tập 19 ký tự đặc biệt theo NFR-04.2. */
+export const SPECIAL_CHARS = '! @ # $ % ^ & * , . / < > ? - _ = + ~'
+const SPECIAL_RE = /[!@#$%^&*,./<>?\-_=+~]/
+
+/** NFR-04.2: 8–64 ký tự, có chữ thường, chữ hoa, chữ số và ký tự đặc biệt. */
 export function passwordChecks(pw: string) {
   const length = pw.length >= LIMITS.passwordMin && pw.length <= LIMITS.passwordMax
-  const letter = /[A-Za-z]/.test(pw)
+  const lower = /[a-z]/.test(pw)
+  const upper = /[A-Z]/.test(pw)
   const digit = /\d/.test(pw)
-  const score = [length, letter, digit, pw.length >= 12, /[^A-Za-z0-9]/.test(pw)].filter(Boolean).length
-  return { length, letter, digit, valid: length && letter && digit, score }
+  const special = SPECIAL_RE.test(pw)
+  const passed = [length, lower, upper, digit, special].filter(Boolean).length
+  const valid = passed === 5
+  return { length, lower, upper, digit, special, valid, passed, strong: valid && pw.length >= 12 }
 }
 
 /** Ảnh minh hoạ giả lập (SVG data URL) dùng cho dữ liệu mẫu. */
