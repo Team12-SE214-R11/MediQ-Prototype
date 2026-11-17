@@ -281,7 +281,7 @@ function ReportDrawer({ report, onClose }: { report: Report; onClose: () => void
   const removed = async () => {
     const ok = await run(() => call(() => { api.removeContent(report.targetType as 'question' | 'article' | 'comment', report.targetId, reason); return true }), { silent: true })
     if (ok) {
-      toast.success('Đã gỡ nội dung cascade và ghi Audit Log', { label: 'Xem Audit Log', onClick: () => navigate('/admin/audit-logs') })
+      toast.success('Đã gỡ nội dung kèm các comment thuộc nội dung này và ghi Audit Log', { label: 'Xem Audit Log', onClick: () => navigate('/admin/audit-logs') })
       setConfirm(false)
     }
   }
@@ -327,9 +327,9 @@ function ReportDrawer({ report, onClose }: { report: Report; onClose: () => void
         {link && !deleted && <Link to={link} className="mt-3 inline-flex items-center gap-1 text-body-md font-semibold text-primary-500 underline"><ExternalLink className="size-4" />Mở trang chi tiết (chỉ đọc)</Link>}
       </div>
 
-      <Modal open={confirm} onClose={() => setConfirm(false)} title="Xác nhận gỡ nội dung vi phạm (cascade soft-delete)" tone="danger"
+      <Modal open={confirm} onClose={() => setConfirm(false)} title="Xác nhận gỡ nội dung vi phạm" tone="danger"
         footer={<><Button variant="outline" onClick={() => setConfirm(false)}>Huỷ</Button><Button variant="danger" loading={loading} onClick={removed}>Xác nhận gỡ vĩnh viễn</Button></>}>
-        <p className="text-body-md">Nội dung bị gỡ: <span className="font-semibold">{TARGET_LABEL[report.targetType]} #{report.targetId}</span> (không thể khôi phục — BR-11)</p>
+        <p className="text-body-md">Nội dung bị gỡ: <span className="font-semibold">{TARGET_LABEL[report.targetType]} #{report.targetId}</span> (không thể khôi phục)</p>
         <p className="mt-3 text-body-md font-semibold">Phạm vi ảnh hưởng tự động:</p>
         <ul className="mt-1 list-disc pl-5 text-body-md text-neutral-700">
           <li>{TARGET_LABEL[report.targetType]} #{report.targetId} → DELETED</li>
@@ -477,7 +477,7 @@ export function AdminTagsPage() {
           </tr>
         ))}
       </Table>
-      <p className="mt-4 text-caption text-neutral-700">Lưu ý (BR-17): hệ thống không hỗ trợ đổi tên Tag. Bài viết cũ vẫn giữ nguyên Tag đã xoá.</p>
+      <p className="mt-4 text-caption text-neutral-700">Lưu ý: hệ thống không hỗ trợ đổi tên Tag. Bài viết cũ vẫn giữ nguyên Tag đã xoá.</p>
       <Modal open={!!deleting} onClose={() => setDeleteId(null)} title={`Xác nhận xoá thẻ chuyên khoa: #${deleting?.name ?? ''}`} tone="danger" size="sm"
         footer={<><Button variant="outline" onClick={() => setDeleteId(null)}>Huỷ</Button><Button variant="danger" loading={del.loading} onClick={async () => { if (await del.run(() => call(() => { api.deleteTag(deleteId!); return true }))) { toast.success('Đã xoá thẻ'); setDeleteId(null) } }}>Xác nhận xoá</Button></>}>
         <p className="text-body-md font-semibold">Thông báo tác động:</p>

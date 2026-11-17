@@ -280,7 +280,7 @@ export function AppLayout() {
           <Link to={admin ? '/admin' : '/'} aria-label="MediQ — Trang chủ" className="mr-4"><Logo /></Link>
           {admin ? (
             <>
-              <span className="flex-1 text-body-md text-neutral-700">Chế độ chỉ đọc dành cho kiểm duyệt (BR-03)</span>
+              <span className="flex-1 text-body-md text-neutral-700">Chế độ chỉ đọc dành cho kiểm duyệt</span>
               <Button variant="outline" icon={<ArrowLeft className="size-4" />} onClick={() => navigate('/admin/reports')}>Về cổng quản trị</Button>
             </>
           ) : (

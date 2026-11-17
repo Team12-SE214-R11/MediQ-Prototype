@@ -104,7 +104,7 @@ function requireUser(): Account {
 }
 function requireMember(): Account {
   const me = requireUser()
-  if (me.role === 'ADMIN') throw new ApiError(403, 'FORBIDDEN', 'Quản trị viên không thực hiện tương tác xã hội (BR-03).')
+  if (me.role === 'ADMIN') throw new ApiError(403, 'FORBIDDEN', 'Quản trị viên không thực hiện tương tác xã hội.')
   return me
 }
 function requireAdmin(): Account {
