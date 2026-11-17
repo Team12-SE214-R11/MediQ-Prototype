@@ -55,7 +55,7 @@ function SuspendModal({ account, defaultReason = '', onClose }: { account: Accou
   return (
     <Modal open onClose={onClose} title={`Tạm khoá tài khoản: @${account.username}`} tone="danger"
       footer={<><Button variant="outline" onClick={onClose}>Huỷ</Button><Button variant="danger" loading={loading} onClick={submit}>Xác nhận tạm khoá</Button></>}>
-      <InfoBox tone="warning" icon={<AlertTriangle />}>Hệ thống sẽ thu hồi tức thì toàn bộ Access & Refresh Token của tài khoản này (NFR-04.6).</InfoBox>
+      <InfoBox tone="warning" icon={<AlertTriangle />}>Hệ thống sẽ thu hồi tức thì toàn bộ Access & Refresh Token của tài khoản này.</InfoBox>
       <fieldset className="mt-4">
         <legend className="mb-2 text-body-md font-medium">Thời hạn tạm khoá <span className="text-danger-600">*</span></legend>
         <div className="grid grid-cols-2 gap-x-4 md:grid-cols-4">
@@ -309,7 +309,7 @@ function ReportDrawer({ report, onClose }: { report: Report; onClose: () => void
 
       <h3 className="mt-6 text-h4 font-semibold">1. Thông tin báo cáo</h3>
       <dl className="mt-2 space-y-2 text-body-md">
-        <div><dt className="inline text-neutral-500">Người báo cáo: </dt><dd className="inline font-semibold">@{accountById(db, report.reporterId)?.username}</dd> <span className="text-caption text-neutral-700">(ẩn danh với bên bị báo cáo, NFR-05.7)</span></div>
+        <div><dt className="inline text-neutral-500">Người báo cáo: </dt><dd className="inline font-semibold">@{accountById(db, report.reporterId)?.username}</dd> <span className="text-caption text-neutral-700">(ẩn danh với bên bị báo cáo)</span></div>
         <div><dt className="inline text-neutral-500">Loại vi phạm: </dt><dd className="inline font-semibold">{report.category}</dd></div>
         <div><dt className="inline text-neutral-500">Lý do: </dt><dd className="inline">“{report.reason}”</dd></div>
         <div><dt className="inline text-neutral-500">Thời điểm: </dt><dd className="inline tabular-nums">{formatDateTime(report.createdAt)}</dd></div>
@@ -504,7 +504,7 @@ export function AuditLogPage() {
   return (
     <>
       <PageTitle>Nhật ký kiểm toán hệ thống (Immutable Audit Log)</PageTitle>
-      <InfoBox icon={<Info />}>Dữ liệu bất biến (NFR-07.3): không thể sửa hoặc xoá bản ghi.</InfoBox>
+      <InfoBox icon={<Info />}>Dữ liệu bất biến: không thể sửa hoặc xoá bản ghi.</InfoBox>
       <div className="my-4 flex flex-wrap items-end gap-4">
         <Select label="Hành động" value={action} onChange={(e) => setAction(e.target.value)}><option value="">Tất cả</option>{actions.map((a) => <option key={a}>{a}</option>)}</Select>
         <div className="w-44"><TextInput label="Từ ngày" type="date" value={from} onChange={(e) => setFrom(e.target.value)} /></div>
