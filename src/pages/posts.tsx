@@ -204,7 +204,7 @@ export function PostDetailPage({ kind }: { kind: PostKind }) {
           <div className="mt-4 flex flex-wrap items-center gap-x-2 border-t border-neutral-200 pt-2">
             {kind === 'article' && <VoteControl targetType="article" targetId={post.id} />}
             <BookmarkButton postId={post.id} />
-            <RevisionButton targetType="post" targetId={post.id} label="Lịch sử chỉnh sửa" />
+            <RevisionButton targetType="post" targetId={post.id} label="Lịch sử chỉnh sửa" diff={kind === 'article'} />
             <OwnerActions post={post} />
             {me?.id !== post.authorId && <ReportButton targetType={kind} targetId={post.id} />}
             <AdminRemoveButton targetType={kind} targetId={post.id} onDone={() => navigate('/admin/reports')} />

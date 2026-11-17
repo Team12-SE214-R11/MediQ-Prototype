@@ -35,7 +35,7 @@ Logic nằm trong `src/mock/store.ts`, tên nhóm hàm bám theo nhóm API của
 - Chỉ Verified Doctor tạo Article (BR-06); chỉ chính chủ sửa và xoá (BR-07); Admin chỉ đọc và chỉ có nút "Xoá nội dung" (BR-03).
 - Huy hiệu bác sĩ tính lúc hiển thị, mất ngay khi bị thu hồi (BR-05).
 - Xoá nội dung kéo theo mọi bình luận con và ảnh (cascade).
-- Mỗi lần sửa tạo một Revision mới; lịch sử chỉ xem snapshot, không có diff hay khôi phục (REQ-SOC-013). Sửa Article không có trường lý do.
+- Mỗi lần sửa tạo một Revision mới; lịch sử xem snapshot; Article có thêm Diff View so sánh hai phiên bản theo dòng, không khôi phục (REQ-SOC-013). Sửa Article không có trường lý do.
 - Vote ba trạng thái, chỉ trên Article và Comment (BR-18); Question không có vote.
 - Thông báo là hệ quả của hành động, không gửi cho chính người thao tác.
 - Vòng đời hồ sơ xác minh và báo cáo; mọi thao tác Admin ghi Audit Log.

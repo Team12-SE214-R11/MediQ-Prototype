@@ -510,21 +510,119 @@ export function ReportButton({ targetType, targetId, compact, controlledOpen, on
   )
 }
 
-// ---------- Revision history (REQ-SOC-013: chỉ xem snapshot, không diff, không khôi phục) ----------
-export function RevisionButton({ targetType, targetId, label = 'Lịch sử' }: { targetType: 'post' | 'comment'; targetId: string; label?: string }) {
+// ---------- Revision history (REQ-SOC-013: xem snapshot; Article có thêm Diff View, không khôi phục) ----------
+type DiffLine = { kind: 'same' | 'add' | 'del'; text: string }
+
+// So sánh theo dòng (LCS); chỉ đọc, tính phía client từ hai Revision đã tải.
+function diffLines(a: string, b: string): DiffLine[] {
+  const x = a.split('\n')
+  const y = b.split('\n')
+  const lcs: number[][] = Array.from({ length: x.length + 1 }, () => new Array<number>(y.length + 1).fill(0))
+  for (let i = x.length - 1; i >= 0; i--) for (let j = y.length - 1; j >= 0; j--) lcs[i][j] = x[i] === y[j] ? lcs[i + 1][j + 1] + 1 : Math.max(lcs[i + 1][j], lcs[i][j + 1])
+  const out: DiffLine[] = []
+  let i = 0
+  let j = 0
+  while (i < x.length && j < y.length) {
+    if (x[i] === y[j]) { out.push({ kind: 'same', text: x[i] }); i++; j++ }
+    else if (lcs[i + 1][j] >= lcs[i][j + 1]) out.push({ kind: 'del', text: x[i++] })
+    else out.push({ kind: 'add', text: y[j++] })
+  }
+  while (i < x.length) out.push({ kind: 'del', text: x[i++] })
+  while (j < y.length) out.push({ kind: 'add', text: y[j++] })
+  return out
+}
+
+function DiffBlock({ lines, label }: { lines: DiffLine[]; label: string }) {
+  const changed = lines.filter((l) => l.kind !== 'same').length
+  // Thu gọn các dòng không đổi, giữ 1 dòng ngữ cảnh quanh phần thay đổi.
+  const show = lines.map((l, i) => l.kind !== 'same' || lines[i - 1]?.kind === 'add' || lines[i - 1]?.kind === 'del' || lines[i + 1]?.kind === 'add' || lines[i + 1]?.kind === 'del')
+  const rows: (DiffLine | { kind: 'gap'; count: number })[] = []
+  lines.forEach((l, i) => {
+    if (show[i]) rows.push(l)
+    else if (rows[rows.length - 1]?.kind === 'gap') (rows[rows.length - 1] as { kind: 'gap'; count: number }).count++
+    else rows.push({ kind: 'gap', count: 1 })
+  })
+  return (
+    <div className="rounded-md border border-neutral-200" role="group" aria-label={label}>
+      <p className="border-b border-neutral-200 px-3 py-2 text-caption font-semibold text-neutral-700">{label} · {changed === 0 ? 'Không thay đổi' : `${changed} dòng thay đổi`}</p>
+      <ul className="divide-y divide-neutral-100">
+        {rows.map((l, i) => l.kind === 'gap' ? (
+          <li key={i} className="px-3 py-1.5 text-caption text-neutral-700">… {l.count} dòng không thay đổi</li>
+        ) : (
+          <li key={i} className={cn('flex gap-3 px-3 py-1.5 text-body-md', l.kind === 'add' && 'bg-success-100 text-neutral-900', l.kind === 'del' && 'bg-danger-100 text-neutral-900')}>
+            <span className={cn('w-16 shrink-0 text-caption font-semibold', l.kind === 'add' ? 'text-success-700' : l.kind === 'del' ? 'text-danger-700' : 'text-neutral-500')}>
+              {l.kind === 'add' ? '[+] Thêm' : l.kind === 'del' ? '[-] Xóa' : ''}
+            </span>
+            <span className={cn('min-w-0 whitespace-pre-wrap break-words', l.kind === 'del' && 'line-through')}>{l.text === '' ? ' ' : l.text}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+export function RevisionButton({ targetType, targetId, label = 'Lịch sử', diff = false }: { targetType: 'post' | 'comment'; targetId: string; label?: string; diff?: boolean }) {
   const db = useDb()
   const [open, setOpen] = useState(false)
   const revisions = db.revisions.filter((r) => r.targetType === targetType && r.targetId === targetId).sort((a, b) => b.version - a.version)
   const [version, setVersion] = useState<number | null>(null)
+  const [mode, setMode] = useState<'view' | 'compare'>('view')
+  const [fromV, setFromV] = useState<number | null>(null)
+  const [toV, setToV] = useState<number | null>(null)
   const current = revisions.find((r) => r.version === version) ?? revisions[0]
   if (revisions.length < 2) return null
   return (
     <>
-      <button type="button" onClick={() => { setVersion(null); setOpen(true) }} className="inline-flex h-11 items-center gap-2 rounded-md px-2 text-body-md font-semibold text-primary-500 hover:bg-neutral-100">
+      <button type="button" onClick={() => { setVersion(null); setMode('view'); setFromV(null); setToV(null); setOpen(true) }} className="inline-flex h-11 items-center gap-2 rounded-md px-2 text-body-md font-semibold text-primary-500 hover:bg-neutral-100">
         <History className="size-5" aria-hidden />
         {label} ({revisions.length})
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title="Lịch sử chỉnh sửa" size="lg">
+        {diff && (
+          <div className="mb-4 flex gap-2" role="group" aria-label="Chế độ xem">
+            {(['view', 'compare'] as const).map((m) => (
+              <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}
+                className={cn('h-11 rounded-md border px-4 text-body-md font-semibold', mode === m ? 'border-primary-700 bg-primary-50 text-primary-700' : 'border-neutral-300 text-neutral-700 hover:bg-neutral-100')}>
+                {m === 'view' ? 'Xem phiên bản' : 'So sánh phiên bản'}
+              </button>
+            ))}
+          </div>
+        )}
+        {diff && mode === 'compare' ? (() => {
+          const a = revisions.find((r) => r.version === fromV) ?? revisions[1]
+          const b = revisions.find((r) => r.version === toV) ?? revisions[0]
+          const addedImgs = b.images.filter((s) => !a.images.includes(s)).length
+          const removedImgs = a.images.filter((s) => !b.images.includes(s)).length
+          const keptImgs = b.images.length - addedImgs
+          const sel = 'h-11 rounded-md border border-neutral-300 bg-white px-3 text-body-md'
+          return (
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="text-body-md">Bản A
+                  <select className={cn(sel, 'ml-2')} value={a.version} onChange={(e) => setFromV(Number(e.target.value))}>
+                    {revisions.map((r) => <option key={r.id} value={r.version}>Phiên bản {r.version}</option>)}
+                  </select>
+                </label>
+                <span aria-hidden>→</span>
+                <label className="text-body-md">Bản B
+                  <select className={cn(sel, 'ml-2')} value={b.version} onChange={(e) => setToV(Number(e.target.value))}>
+                    {revisions.map((r) => <option key={r.id} value={r.version}>Phiên bản {r.version}</option>)}
+                  </select>
+                </label>
+              </div>
+              {a.version === b.version ? (
+                <p className="mt-4 text-body-md text-neutral-700" role="status">Hãy chọn hai phiên bản khác nhau để so sánh.</p>
+              ) : (
+                <div className="mt-4 space-y-4">
+                  <p className="text-body-md text-neutral-700">So sánh <span className="font-semibold">Phiên bản {a.version}</span> ({formatDateTime(a.createdAt)}) với <span className="font-semibold">Phiên bản {b.version}</span> ({formatDateTime(b.createdAt)}).</p>
+                  <DiffBlock label="Tiêu đề" lines={diffLines(a.title ?? '', b.title ?? '')} />
+                  <DiffBlock label="Nội dung" lines={diffLines(a.body, b.body)} />
+                  <p className="text-body-md text-neutral-700">Ảnh: thêm {addedImgs}, gỡ {removedImgs}, giữ {keptImgs}.</p>
+                </div>
+              )}
+              <p className="mt-3 text-caption text-neutral-700">Chỉ để đối chiếu; không khôi phục được phiên bản cũ.</p>
+            </div>
+          )
+        })() : (<>
         <div className="flex flex-wrap items-center gap-2">
           {revisions.map((r) => (
             <button key={r.id} type="button" onClick={() => setVersion(r.version)} aria-pressed={r.version === current.version}
@@ -543,6 +641,7 @@ export function RevisionButton({ targetType, targetId, label = 'Lịch sử' }: 
           {current.images.length > 0 && <div className="mt-4"><ImageGrid images={current.images} label="Ảnh của phiên bản" /></div>}
         </div>
         <p className="mt-3 text-caption text-neutral-700">Mỗi lần lưu chỉnh sửa tạo một phiên bản mới; các phiên bản cũ được giữ nguyên để tham chiếu.</p>
+        </>)}
       </Modal>
     </>
   )
