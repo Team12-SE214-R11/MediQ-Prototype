@@ -1,0 +1,248 @@
+@import 'tailwindcss';
+
+/* MediQ Design Tokens — nguồn: MediQ-Docs/.../04-Design-System/Design-Tokens.md
+   Bảng màu mặc định của Tailwind bị xoá để không lọt giá trị ngoài token. */
+@theme {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-transparent: transparent;
+
+  --color-primary-950: #081a31;
+  --color-primary-900: #0b2545;
+  --color-primary-800: #0f335e;
+  --color-primary-700: #134074;
+  --color-primary-600: #175394;
+  --color-primary-500: #1d4ed8;
+  --color-primary-400: #3b82f6;
+  --color-primary-300: #93c5fd;
+  --color-primary-200: #bfdbfe;
+  --color-primary-100: #dbeafe;
+  --color-primary-50: #eff6ff;
+
+  --color-teal-800: #115e59;
+  --color-teal-700: #0f766e;
+  --color-teal-600: #0d9488;
+  --color-teal-500: #14b8a6;
+  --color-teal-100: #ccfbf1;
+  --color-teal-50: #f0fdfa;
+
+  --color-badge-gold-dark: #92400e;
+  --color-badge-gold: #d97706;
+  --color-badge-gold-light: #fef3c7;
+  --color-badge-cyan-dark: #0369a1;
+  --color-badge-cyan: #0284c7;
+  --color-badge-cyan-light: #e0f2fe;
+
+  --color-success-700: #15803d;
+  --color-success-600: #16a34a;
+  --color-success-100: #dcfce7;
+  --color-warning-700: #c2410c;
+  --color-warning-600: #ea580c;
+  --color-warning-100: #ffedd5;
+  --color-danger-700: #b91c1c;
+  --color-danger-600: #dc2626;
+  --color-danger-100: #fee2e2;
+  --color-info-700: #1d4ed8;
+  --color-info-600: #2563eb;
+  --color-info-100: #dbeafe;
+
+  --color-neutral-950: #030712;
+  --color-neutral-900: #111827;
+  --color-neutral-700: #374151;
+  --color-neutral-500: #6b7280;
+  --color-neutral-400: #9ca3af;
+  --color-neutral-300: #d1d5db;
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-100: #f3f4f6;
+  --color-neutral-50: #f9fafb;
+
+  --font-sans: 'Inter', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+  --text-h1: 2rem;
+  --text-h1--line-height: 2.5rem;
+  --text-h1--font-weight: 700;
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 2rem;
+  --text-h2--font-weight: 600;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.75rem;
+  --text-h3--font-weight: 600;
+  --text-h4: 1.125rem;
+  --text-h4--line-height: 1.625rem;
+  --text-h4--font-weight: 500;
+  --text-body-lg: 1rem;
+  --text-body-lg--line-height: 1.5rem;
+  --text-body-md: 0.875rem;
+  --text-body-md--line-height: 1.25rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
+  --text-caption--font-weight: 500;
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 0.875rem;
+  --text-micro--font-weight: 700;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1440px;
+
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    color: var(--color-neutral-900);
+    background: var(--color-neutral-50);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    min-height: 100dvh;
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary-500);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+/* Vùng chạm tối thiểu 44x44 trên thiết bị cảm ứng (Accessibility Guidelines mục III) */
+@utility touch-target {
+  position: relative;
+  @media (pointer: coarse) {
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      min-width: 44px;
+      min-height: 44px;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-neutral-200), var(--color-neutral-100), var(--color-neutral-200));
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+  border-radius: var(--radius-md);
+}
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes slide-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+}
+@keyframes slide-in-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@utility anim-right {
+  animation: slide-in-right 350ms cubic-bezier(0, 0, 0.2, 1);
+}
+@utility anim-left {
+  animation: slide-in-left 350ms cubic-bezier(0, 0, 0.2, 1);
+}
+@utility anim-up {
+  animation: slide-in-up 350ms cubic-bezier(0, 0, 0.2, 1);
+}
+@utility anim-pop {
+  animation: pop-in 350ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Nội dung Markdown của câu hỏi / bài viết */
+.prose-mediq {
+  color: var(--color-neutral-900);
+  overflow-wrap: anywhere;
+}
+.prose-mediq > * + * {
+  margin-top: 1rem;
+}
+.prose-mediq h1,
+.prose-mediq h2,
+.prose-mediq h3 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+}
+.prose-mediq ul {
+  list-style: disc;
+  padding-left: 1.5rem;
+}
+.prose-mediq ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+}
+.prose-mediq a {
+  color: var(--color-primary-500);
+  text-decoration: underline;
+}
+.prose-mediq blockquote {
+  background: var(--color-primary-50);
+  border-left: 4px solid var(--color-primary-300);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md);
+}
+.prose-mediq code {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  background: var(--color-neutral-100);
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
