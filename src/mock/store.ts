@@ -627,7 +627,7 @@ export const api = {
     if (text.length > LIMITS.reason) invalid(`Lý do tối đa ${LIMITS.reason} ký tự.`)
     mutate((db) => {
       const target = targetType === 'comment' ? db.comments.find((c) => c.id === targetId) : db.posts.find((p) => p.id === targetId)
-      if (!target || target.status !== 'ACTIVE') throw new ApiError(409, 'TARGET_DELETED', 'Nội dung mục tiêu đã ở trạng thái DELETED.')
+      if (!target || target.status !== 'ACTIVE') throw new ApiError(409, 'TARGET_DELETED', 'Nội dung mục tiêu đã bị xoá trước đó.')
       const impact = targetType === 'comment' ? cascadeDeleteComment(db, targetId) : cascadeDeletePost(db, targetId)
       audit(db, admin.id, 'CONTENT_REMOVED', `${targetType}:${targetId}`, { reason: text, cascadeComments: impact.comments, cascadeImages: impact.images })
     })

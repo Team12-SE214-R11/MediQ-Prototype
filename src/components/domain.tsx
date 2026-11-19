@@ -667,7 +667,7 @@ export function AdminRemoveButton({ targetType, targetId, onDone }: { targetType
       <Button variant="danger" size="sm" icon={<Trash2 className="size-4" />} onClick={() => setOpen(true)}>Xoá nội dung</Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Xác nhận gỡ nội dung vi phạm" tone="danger"
         footer={<><Button variant="outline" onClick={() => setOpen(false)}>Huỷ</Button><Button variant="danger" loading={loading} onClick={submit}>Xác nhận gỡ vĩnh viễn</Button></>}>
-        <p className="text-body-md text-neutral-700">Nội dung và toàn bộ bình luận con sẽ chuyển sang DELETED, không thể khôi phục.</p>
+        <p className="text-body-md text-neutral-700">Nội dung và toàn bộ bình luận con sẽ bị xoá, không thể khôi phục.</p>
         <div className="mt-4"><Textarea label="Lý do kiểm duyệt (ghi vào Audit Log)" required value={reason} onChange={(e) => setReason(e.target.value)} max={LIMITS.reason} error={error?.message} /></div>
       </Modal>
     </>

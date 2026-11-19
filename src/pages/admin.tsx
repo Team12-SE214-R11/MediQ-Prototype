@@ -293,7 +293,7 @@ function ReportDrawer({ report, onClose }: { report: Report; onClose: () => void
           {report.status === 'REVIEWING' && (
             <>
               <div className="flex flex-wrap gap-3">
-                {report.targetType !== 'account' && <Button variant="danger" icon={<Trash2 className="size-4" />} disabled={deleted} onClick={() => setConfirm(true)}>Gỡ nội dung cascade</Button>}
+                {report.targetType !== 'account' && <Button variant="danger" icon={<Trash2 className="size-4" />} disabled={deleted} onClick={() => setConfirm(true)}>Gỡ nội dung</Button>}
                 {owner && owner.status === 'ACTIVE' && owner.role !== 'ADMIN' && <Button variant="outline" className="border-warning-700 text-warning-700" icon={<ShieldAlert className="size-4" />} onClick={() => setSuspend(true)}>Tạm khoá @{owner.username}</Button>}
               </div>
               <div className="flex gap-3 border-t border-neutral-200 pt-3">
@@ -316,7 +316,7 @@ function ReportDrawer({ report, onClose }: { report: Report; onClose: () => void
       </dl>
 
       <h3 className="mt-6 text-h4 font-semibold">2. Ngữ cảnh nội dung bị tố cáo ({TARGET_LABEL[report.targetType]})</h3>
-      {deleted && <div className="mt-2"><InfoBox tone="warning" icon={<Info />}>Nội dung mục tiêu đã ở trạng thái DELETED.</InfoBox></div>}
+      {deleted && <div className="mt-2"><InfoBox tone="warning" icon={<Info />}>Nội dung mục tiêu đã bị xoá trước đó.</InfoBox></div>}
       <div className="mt-2 rounded-md border border-neutral-200 bg-neutral-50 p-4">
         <p className="text-body-md"><span className="text-neutral-500">Tác giả: </span><span className="font-semibold">@{owner?.username ?? 'đã xoá'}</span> <StatusBadge status={owner?.status ?? 'DELETED'} /></p>
         {post && <p className="mt-2 text-body-lg font-semibold">{post.title}</p>}
@@ -330,11 +330,11 @@ function ReportDrawer({ report, onClose }: { report: Report; onClose: () => void
       <Modal open={confirm} onClose={() => setConfirm(false)} title="Xác nhận gỡ nội dung vi phạm" tone="danger"
         footer={<><Button variant="outline" onClick={() => setConfirm(false)}>Huỷ</Button><Button variant="danger" loading={loading} onClick={removed}>Xác nhận gỡ vĩnh viễn</Button></>}>
         <p className="text-body-md">Nội dung bị gỡ: <span className="font-semibold">{TARGET_LABEL[report.targetType]} #{report.targetId}</span> (không thể khôi phục)</p>
-        <p className="mt-3 text-body-md font-semibold">Phạm vi ảnh hưởng tự động:</p>
+        <p className="mt-3 text-body-md font-semibold">Phạm vi nội dung bị xoá tự động:</p>
         <ul className="mt-1 list-disc pl-5 text-body-md text-neutral-700">
-          <li>{TARGET_LABEL[report.targetType]} #{report.targetId} → DELETED</li>
-          <li>{impact.comments} Comment / Reply con mọi cấp → DELETED</li>
-          <li>{impact.images} Image → SOFT_DELETED</li>
+          <li>{TARGET_LABEL[report.targetType]} #{report.targetId}</li>
+          <li>{impact.comments} Comment / Reply con mọi cấp</li>
+          <li>{impact.images} Image</li>
         </ul>
         <div className="mt-4"><Textarea label="Lý do kiểm duyệt (ghi vào Audit Log)" required value={reason} onChange={(e) => setReason(e.target.value)} max={LIMITS.reason} error={error?.message} /></div>
       </Modal>
