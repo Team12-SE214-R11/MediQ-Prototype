@@ -323,7 +323,7 @@ function ReportDrawer({ report, onClose }: { report: Report; onClose: () => void
         {content && <p className="mt-2 text-body-md break-words text-neutral-700">“{excerpt(content.body, 400)}”</p>}
         {report.targetType === 'account' && <p className="mt-2 text-body-md text-neutral-700">{owner?.bio || 'Tài khoản không có giới thiệu.'}</p>}
         {content && content.images.length > 0 && <div className="mt-3"><ImageGrid images={content.images} label="Ảnh trong nội dung" /></div>}
-        {report.targetType !== 'account' && !deleted && <p className="mt-3 text-caption font-semibold text-danger-700">Ảnh hưởng xoá lan truyền: {impact.comments} bình luận, {impact.images} ảnh</p>}
+        {report.targetType !== 'account' && !deleted && <p className="mt-3 text-caption font-semibold text-danger-700">Các nội dung bị xoá tự động khi nội dung này bị gỡ: {impact.comments} bình luận, {impact.images} ảnh</p>}
         {link && !deleted && <Link to={link} className="mt-3 inline-flex items-center gap-1 text-body-md font-semibold text-primary-500 underline"><ExternalLink className="size-4" />Mở trang chi tiết (chỉ đọc)</Link>}
       </div>
 
