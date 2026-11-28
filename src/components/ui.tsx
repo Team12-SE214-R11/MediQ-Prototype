@@ -359,7 +359,7 @@ export function useAction() {
     try {
       return await fn()
     } catch (e) {
-      const err = e instanceof ApiError ? e : new ApiError(500, 'INTERNAL', e instanceof Error ? e.message : 'Đã có lỗi xảy ra. Vui lòng thử lại.')
+      const err = e instanceof ApiError ? e : new ApiError(500, 'INTERNAL_ERROR', e instanceof Error ? e.message : 'Đã có lỗi xảy ra. Vui lòng thử lại.')
       setError(err)
       if (!opts.silent) toast.error(err.message)
       return undefined

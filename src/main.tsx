@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Outlet, Route, Routes } from 'react-router'
 import { Toaster } from './components/ui'
 import { AdminLayout, AppLayout, AuthLayout, DemoBar, ForbiddenPage, GuestOnly, NotFoundPage, RequireAuth, SuspendedPage } from './layouts'
-import { AccountsPage, AdminDashboardPage, AdminTagsPage, AuditLogPage, ReportsQueuePage, VerificationDetailPage, VerificationQueuePage } from './pages/admin'
+import { AccountsPage, AdminDashboardPage, AdminSecurityPage, AdminTagsPage, AuditLogPage, ReportsQueuePage, VerificationDetailPage, VerificationQueuePage } from './pages/admin'
 import { ForgotPasswordPage, LoginPage, RegisterPage, TwoFactorPage, VerifyPendingPage, VerifySuccessPage } from './pages/auth'
 import { ApplyVerificationPage, VerificationStatusPage } from './pages/dv'
 import { ArticlesFeedPage, FeedPage, SearchPage, TagsPage } from './pages/feed'
@@ -69,6 +69,7 @@ function App() {
           <Route path="accounts" element={<AccountsPage />} />
           <Route path="tags" element={<AdminTagsPage />} />
           <Route path="audit-logs" element={<AuditLogPage />} />
+          <Route path="security" element={<AdminSecurityPage />} />
         </Route>
       </Routes>
       <Toaster />

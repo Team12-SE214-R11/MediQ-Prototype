@@ -36,7 +36,7 @@ interface State {
 }
 
 export const useStore = create<State>()(
-  persist((): State => ({ db: createSeed(), sessionUserId: null, pending2FA: null }), { name: 'mediq-prototype-v2' }),
+  persist((): State => ({ db: createSeed(), sessionUserId: null, pending2FA: null }), { name: 'mediq-prototype-v3' }),
 )
 
 const get = () => useStore.getState()
@@ -63,6 +63,8 @@ export function call<T>(fn: () => T, delay = 350): Promise<T> {
 // ---------- Selectors ----------
 
 export const DELETED_NAME = 'Deleted MediQ user'
+/** BR-02: Admin bắt buộc mật khẩu kèm TOTP, không đăng ký hay đăng nhập bằng Passkey. */
+const ADMIN_NO_PASSKEY = 'Tài khoản quản trị chỉ đăng nhập bằng mật khẩu và mã xác thực 2FA.'
 
 export function currentUser(s: State = get()): Account | null {
   return s.db.accounts.find((a) => a.id === s.sessionUserId) ?? null
@@ -104,19 +106,19 @@ function requireUser(): Account {
 }
 function requireMember(): Account {
   const me = requireUser()
-  if (me.role === 'ADMIN') throw new ApiError(403, 'FORBIDDEN', 'Quản trị viên không thực hiện tương tác xã hội.')
+  if (me.role === 'ADMIN') throw new ApiError(403, 'ROLE_NOT_ALLOWED', 'Quản trị viên không thực hiện tương tác xã hội.')
   return me
 }
 function requireAdmin(): Account {
   const me = requireUser()
-  if (me.role !== 'ADMIN') throw new ApiError(403, 'FORBIDDEN', 'Chỉ Quản trị viên được thực hiện thao tác này.')
+  if (me.role !== 'ADMIN') throw new ApiError(403, 'ROLE_NOT_ALLOWED', 'Chỉ Quản trị viên được thực hiện thao tác này.')
   return me
 }
 function invalid(message: string): never {
   throw new ApiError(422, 'VALIDATION_FAILED', message)
 }
 function checkPassword(me: Account, password: string) {
-  if (me.password !== password) throw new ApiError(422, 'INVALID_PASSWORD', 'Mật khẩu hiện tại không đúng.')
+  if (me.password !== password) throw new ApiError(403, 'INVALID_PASSWORD', 'Mật khẩu hiện tại không đúng.')
 }
 
 function audit(db: Database, actorId: string, action: string, target: string, metadata: Record<string, unknown>) {
@@ -210,8 +212,8 @@ export const api = {
     const username = input.username.trim()
     api._checkPassword(input.password)
     mutate((db) => {
-      if (db.accounts.some((a) => a.email === email)) throw new ApiError(409, 'EMAIL_TAKEN', 'Email này đã được đăng ký.')
-      if (db.accounts.some((a) => a.username === username)) throw new ApiError(409, 'USERNAME_TAKEN', 'Tên đăng nhập đã tồn tại.')
+      if (db.accounts.some((a) => a.email === email)) throw new ApiError(409, 'EMAIL_ALREADY_EXISTS', 'Email này đã được đăng ký.')
+      if (db.accounts.some((a) => a.username === username)) throw new ApiError(409, 'USERNAME_ALREADY_EXISTS', 'Tên đăng nhập đã tồn tại.')
       db.accounts.push({
         id: uid('u'), email, username, displayName: input.displayName.trim(), password: input.password, bio: '', avatar: null,
         role: 'NORMAL_USER', status: 'UNVERIFIED', suspendedUntil: null, suspendReason: null, twoFA: false, passkeys: [], createdAt: now(),
@@ -227,7 +229,7 @@ export const api = {
   verifyEmail(email: string) {
     mutate((db) => {
       const acc = db.accounts.find((a) => a.email === email)
-      if (!acc || acc.status !== 'UNVERIFIED') throw new ApiError(400, 'INVALID_TOKEN', 'Liên kết đã hết hạn hoặc không còn hợp lệ.')
+      if (!acc || acc.status !== 'UNVERIFIED') throw new ApiError(400, 'VERIFICATION_TOKEN_INVALID', 'Liên kết đã hết hạn hoặc không còn hợp lệ.')
       acc.status = 'ACTIVE'
     })
   },
@@ -240,8 +242,12 @@ export const api = {
   },
   loginWithPasskey(email: string): 'ok' | '2fa' {
     const acc = get().db.accounts.find((a) => a.email === email.trim().toLowerCase())
-    if (!acc || acc.passkeys.length === 0 || acc.status === 'DELETED')
-      throw new ApiError(401, 'PASSKEY_NOT_FOUND', 'Không tìm thấy Passkey nào trên thiết bị này cho tài khoản đã nhập.')
+    if (!acc || acc.status === 'DELETED')
+      throw new ApiError(401, 'PASSKEY_AUTH_FAILED', 'Xác thực Passkey thất bại.')
+    // BR-02: Admin bắt buộc mật khẩu kèm TOTP nên không đăng nhập bằng Passkey (API-AUTH-11 trả 403).
+    if (acc.role === 'ADMIN') throw new ApiError(403, 'ROLE_NOT_ALLOWED', ADMIN_NO_PASSKEY)
+    if (acc.passkeys.length === 0)
+      throw new ApiError(401, 'PASSKEY_AUTH_FAILED', 'Xác thực Passkey thất bại.')
     // Passkey đã là xác thực mạnh nên bỏ qua bước TOTP.
     return api._startSession(acc, true)
   },
@@ -260,7 +266,8 @@ export const api = {
         throw new ApiError(403, 'ACCOUNT_SUSPENDED', 'Tài khoản đang bị tạm khoá.')
       }
     }
-    if (acc.twoFA && !skip2FA) {
+    // BR-02: Admin luôn phải qua bước TOTP, bất kể cờ twoFA.
+    if ((acc.twoFA || acc.role === 'ADMIN') && !skip2FA) {
       useStore.setState({ pending2FA: acc.id })
       return '2fa'
     }
@@ -270,8 +277,8 @@ export const api = {
   /** Prototype chấp nhận mọi mã 6 chữ số, trừ 000000 để demo trường hợp sai mã. */
   verify2FA(code: string) {
     const id = get().pending2FA
-    if (!id) throw new ApiError(401, 'SESSION_EXPIRED', 'Phiên xác thực đã hết hạn. Vui lòng đăng nhập lại.')
-    if (!/^\d{6}$/.test(code) || code === '000000') throw new ApiError(401, 'INVALID_TOTP', 'Mã xác thực không đúng. Vui lòng thử lại.')
+    if (!id) throw new ApiError(401, 'CHALLENGE_EXPIRED', 'Phiên xác thực đã hết hạn. Vui lòng đăng nhập lại.')
+    if (!/^\d{6}$/.test(code) || code === '000000') throw new ApiError(401, 'TOTP_INVALID', 'Mã xác thực không đúng. Vui lòng thử lại.')
     useStore.setState({ sessionUserId: id, pending2FA: null })
   },
   logout() {
@@ -312,21 +319,24 @@ export const api = {
   enable2FA(password: string, code: string) {
     const me = requireUser()
     checkPassword(me, password)
-    if (!/^\d{6}$/.test(code) || code === '000000') throw new ApiError(422, 'INVALID_TOTP', 'Mã 6 chữ số không đúng.')
+    if (!/^\d{6}$/.test(code) || code === '000000') throw new ApiError(401, 'TOTP_INVALID', 'Mã xác thực không đúng hoặc đã hết hiệu lực.')
     mutate((db) => (accountById(db, me.id)!.twoFA = true))
   },
   disable2FA(password: string) {
     const me = requireUser()
+    if (me.role === 'ADMIN') throw new ApiError(403, 'ROLE_NOT_ALLOWED', 'Tài khoản quản trị bắt buộc dùng 2FA và không được tắt.')
     checkPassword(me, password)
     mutate((db) => (accountById(db, me.id)!.twoFA = false))
   },
   addPasskey(name: string) {
     const me = requireUser()
-    if (me.passkeys.length >= LIMITS.passkeys) throw new ApiError(422, 'TOO_MANY_ITEMS', `Mỗi tài khoản tối đa ${LIMITS.passkeys} Passkey.`)
+    if (me.role === 'ADMIN') throw new ApiError(403, 'ROLE_NOT_ALLOWED', ADMIN_NO_PASSKEY)
+    if (me.passkeys.length >= LIMITS.passkeys) throw new ApiError(409, 'PASSKEY_LIMIT_REACHED', `Mỗi tài khoản tối đa ${LIMITS.passkeys} Passkey.`)
     mutate((db) => accountById(db, me.id)!.passkeys.push({ id: uid('pk'), name: name.trim().slice(0, LIMITS.passkeyName) || 'Thiết bị mới', createdAt: now() }))
   },
   renamePasskey(id: string, name: string) {
     const me = requireUser()
+    if (me.role === 'ADMIN') throw new ApiError(403, 'ROLE_NOT_ALLOWED', ADMIN_NO_PASSKEY)
     mutate((db) => {
       const pk = accountById(db, me.id)!.passkeys.find((p) => p.id === id)
       if (pk) pk.name = name.trim().slice(0, LIMITS.passkeyName) || pk.name
@@ -334,6 +344,7 @@ export const api = {
   },
   removePasskey(id: string) {
     const me = requireUser()
+    if (me.role === 'ADMIN') throw new ApiError(403, 'ROLE_NOT_ALLOWED', ADMIN_NO_PASSKEY)
     mutate((db) => {
       const acc = accountById(db, me.id)!
       acc.passkeys = acc.passkeys.filter((p) => p.id !== id)
@@ -359,7 +370,7 @@ export const api = {
     const me = requireMember()
     // BR-06: chỉ Verified Doctor được tạo Article.
     if (kind === 'article' && me.role !== 'VERIFIED_DOCTOR')
-      throw new ApiError(403, 'FORBIDDEN', 'Chỉ bác sĩ đã xác minh mới được đăng bài viết chuyên môn.')
+      throw new ApiError(403, 'ROLE_NOT_ALLOWED', 'Chỉ bác sĩ đã xác minh mới được đăng bài viết chuyên môn.')
     const id = uid(kind === 'question' ? 'q' : 'a')
     mutate((db) => {
       const { title, body } = validatePost(kind, input, db)
@@ -375,9 +386,9 @@ export const api = {
     mutate((db) => {
       const post = db.posts.find((p) => p.id === id)
       if (!post || post.status !== 'ACTIVE') throw new ApiError(404, 'NOT_FOUND', 'Nội dung không còn tồn tại.')
-      if (post.authorId !== me.id) throw new ApiError(403, 'FORBIDDEN', 'Bạn chỉ có thể sửa nội dung do mình tạo.')
+      if (post.authorId !== me.id) throw new ApiError(403, 'NOT_OWNER', 'Bạn chỉ có thể sửa nội dung do mình tạo.')
       if (post.kind === 'article' && me.role !== 'VERIFIED_DOCTOR')
-        throw new ApiError(403, 'FORBIDDEN', 'Tài khoản không còn quyền Verified Doctor nên không thể sửa bài viết.')
+        throw new ApiError(403, 'ROLE_NOT_ALLOWED', 'Tài khoản không còn quyền Verified Doctor nên không thể sửa bài viết.')
       const { title, body } = validatePost(post.kind, input, db, post)
       Object.assign(post, { title, body, tagIds: input.tagIds, images: input.images, editedAt: now() })
       const version = db.revisions.filter((r) => r.targetType === 'post' && r.targetId === id).length + 1
@@ -389,7 +400,7 @@ export const api = {
     mutate((db) => {
       const post = db.posts.find((p) => p.id === id)
       if (!post || post.status !== 'ACTIVE') throw new ApiError(404, 'NOT_FOUND', 'Nội dung không còn tồn tại.')
-      if (post.authorId !== me.id) throw new ApiError(403, 'FORBIDDEN', 'Bạn chỉ có thể xoá nội dung do mình tạo.')
+      if (post.authorId !== me.id) throw new ApiError(403, 'NOT_OWNER', 'Bạn chỉ có thể xoá nội dung do mình tạo.')
       cascadeDeletePost(db, id)
     })
   },
@@ -413,8 +424,8 @@ export const api = {
       const link = post.kind === 'question' ? `/questions/${post.id}` : `/articles/${post.id}`
       const kindLabel = post.kind === 'question' ? 'câu hỏi' : 'bài viết'
       // Reply báo cho tác giả comment cha; comment gốc báo cho tác giả nội dung. Không gửi kép.
-      if (parent) notify(db, parent.authorId, me.id, 'REPLY', `${me.displayName} đã trả lời bình luận của bạn`, text, link)
-      else notify(db, post.authorId, me.id, 'COMMENT', `${me.displayName} đã bình luận về ${kindLabel} của bạn`, text, link)
+      if (parent) notify(db, parent.authorId, me.id, 'COMMENT_REPLY', `${me.displayName} đã trả lời bình luận của bạn`, text, link)
+      else notify(db, post.authorId, me.id, post.kind === 'question' ? 'COMMENT_ON_QUESTION' : 'COMMENT_ON_ARTICLE', `${me.displayName} đã bình luận về ${kindLabel} của bạn`, text, link)
     })
     return id
   },
@@ -426,7 +437,7 @@ export const api = {
     mutate((db) => {
       const c = db.comments.find((x) => x.id === id)
       if (!c || c.status !== 'ACTIVE') throw new ApiError(404, 'NOT_FOUND', 'Bình luận không còn tồn tại.')
-      if (c.authorId !== me.id) throw new ApiError(403, 'FORBIDDEN', 'Bạn chỉ có thể sửa bình luận của mình.')
+      if (c.authorId !== me.id) throw new ApiError(403, 'NOT_OWNER', 'Bạn chỉ có thể sửa bình luận của mình.')
       c.body = text
       c.editedAt = now()
       const version = db.revisions.filter((r) => r.targetType === 'comment' && r.targetId === id).length + 1
@@ -438,7 +449,7 @@ export const api = {
     mutate((db) => {
       const c = db.comments.find((x) => x.id === id)
       if (!c || c.status !== 'ACTIVE') throw new ApiError(404, 'NOT_FOUND', 'Bình luận không còn tồn tại.')
-      if (c.authorId !== me.id) throw new ApiError(403, 'FORBIDDEN', 'Bạn chỉ có thể xoá bình luận của mình.')
+      if (c.authorId !== me.id) throw new ApiError(403, 'NOT_OWNER', 'Bạn chỉ có thể xoá bình luận của mình.')
       cascadeDeleteComment(db, id)
     })
   },
@@ -475,10 +486,11 @@ export const api = {
     if (text.length > LIMITS.reason) invalid(`Lý do tối đa ${LIMITS.reason} ký tự.`)
     mutate((db) => {
       const dup = db.reports.some((r) => r.reporterId === me.id && r.targetType === targetType && r.targetId === targetId && (r.status === 'PENDING' || r.status === 'REVIEWING'))
-      if (dup) throw new ApiError(409, 'DUPLICATE_REPORT', 'Bạn đã báo cáo nội dung này và báo cáo đang được xử lý.')
+      if (dup) throw new ApiError(409, 'REPORT_ALREADY_EXISTS', 'Bạn đã báo cáo nội dung này và báo cáo đang được xử lý.')
       const severity = /thuốc|lừa đảo|giả mạo/i.test(category) ? 'HIGH' : 'MEDIUM'
       const seq = 100 + db.reports.length + 11
       db.reports.unshift({ id: `RP-${seq}`, reporterId: me.id, targetType, targetId, category, severity, reason: text, status: 'PENDING', createdAt: now(), handledBy: null })
+      notify(db, me.id, null, 'REPORT_CREATED', `Đã tiếp nhận báo cáo RP-${seq}`, 'Ban Quản trị sẽ xem xét báo cáo của bạn và thông báo kết quả.', '/notifications')
     })
   },
 
@@ -551,7 +563,11 @@ export const api = {
       if (acc.role === 'VERIFIED_DOCTOR') acc.role = 'NORMAL_USER'
       const profile = doctorProfileOf(db, acc.id)
       if (profile) profile.revoked = true
-      db.verifications = db.verifications.filter((x) => !(x.accountId === acc.id && x.type === 'UPDATE' && x.status === 'PENDING'))
+      for (const p of db.verifications.filter((x) => x.accountId === acc.id && x.status === 'PENDING')) {
+        p.status = 'CANCELLED'
+        p.decidedAt = now()
+        p.history.push({ at: now(), action: 'CANCELLED', status: 'CANCELLED', note: 'Hệ thống huỷ hồ sơ PENDING do xác minh bị thu hồi' })
+      }
       audit(db, admin.id, 'VERIFICATION_REVOKED', v.id, { reason: text })
       notify(db, acc.id, admin.id, 'VERIFICATION_REVOKED', 'Xác minh bác sĩ của bạn đã bị thu hồi', text, '/doctor-verification/status')
     })
@@ -600,7 +616,7 @@ export const api = {
       if (!r || r.status !== 'PENDING') throw new ApiError(409, 'INVALID_REPORT_STATE', 'Báo cáo đã được phiên khác tiếp nhận.')
       r.status = 'REVIEWING'
       r.handledBy = admin.id
-      audit(db, admin.id, 'REPORT_REVIEWING', r.id, {})
+      audit(db, admin.id, 'REPORT_REVIEW_STARTED', r.id, {})
     })
   },
   closeReport(id: string, outcome: 'RESOLVED' | 'REJECTED') {
@@ -627,7 +643,7 @@ export const api = {
     if (text.length > LIMITS.reason) invalid(`Lý do tối đa ${LIMITS.reason} ký tự.`)
     mutate((db) => {
       const target = targetType === 'comment' ? db.comments.find((c) => c.id === targetId) : db.posts.find((p) => p.id === targetId)
-      if (!target || target.status !== 'ACTIVE') throw new ApiError(409, 'TARGET_DELETED', 'Nội dung mục tiêu đã bị xoá trước đó.')
+      if (!target || target.status !== 'ACTIVE') throw new ApiError(404, 'NOT_FOUND', 'Nội dung mục tiêu đã bị xoá trước đó.')
       const impact = targetType === 'comment' ? cascadeDeleteComment(db, targetId) : cascadeDeletePost(db, targetId)
       audit(db, admin.id, 'CONTENT_REMOVED', `${targetType}:${targetId}`, { reason: text, cascadeComments: impact.comments, cascadeImages: impact.images })
     })
@@ -641,23 +657,23 @@ export const api = {
     if (days !== null && (!Number.isInteger(days) || days < 1 || days > 365)) invalid('Thời hạn tạm khoá từ 1 đến 365 ngày.')
     mutate((db) => {
       const acc = accountById(db, accountId)
-      if (!acc || acc.status !== 'ACTIVE') throw new ApiError(409, 'INVALID_ACCOUNT_STATE', 'Chỉ tạm khoá được tài khoản đang ACTIVE.')
-      if (acc.role === 'ADMIN') throw new ApiError(403, 'FORBIDDEN', 'Không thể tạm khoá tài khoản Quản trị viên.')
+      if (!acc || acc.status !== 'ACTIVE') throw new ApiError(409, 'ACCOUNT_ALREADY_SUSPENDED', 'Chỉ tạm khoá được tài khoản đang ACTIVE.')
+      if (acc.role === 'ADMIN') throw new ApiError(403, 'CANNOT_SUSPEND_SELF', 'Không thể tạm khoá tài khoản Quản trị viên.')
       acc.status = 'SUSPENDED'
       acc.suspendedUntil = days === null ? null : new Date(Date.now() + days * 86_400_000).toISOString()
       acc.suspendReason = text
-      audit(db, admin.id, 'SUSPEND', `account:${acc.username}`, { days: days ?? 'indefinite', reason: text })
+      audit(db, admin.id, 'ACCOUNT_SUSPENDED', `account:${acc.username}`, { days: days ?? 'indefinite', reason: text })
     })
   },
   unsuspend(accountId: string) {
     const admin = requireAdmin()
     mutate((db) => {
       const acc = accountById(db, accountId)
-      if (!acc || acc.status !== 'SUSPENDED') throw new ApiError(409, 'INVALID_ACCOUNT_STATE', 'Tài khoản không ở trạng thái tạm khoá.')
+      if (!acc || acc.status !== 'SUSPENDED') throw new ApiError(409, 'ACCOUNT_NOT_SUSPENDED', 'Tài khoản không ở trạng thái tạm khoá.')
       acc.status = 'ACTIVE'
       acc.suspendedUntil = null
       acc.suspendReason = null
-      audit(db, admin.id, 'UNSUSPEND', `account:${acc.username}`, {})
+      audit(db, admin.id, 'ACCOUNT_UNSUSPENDED', `account:${acc.username}`, {})
     })
   },
   createTag(name: string) {
@@ -666,10 +682,10 @@ export const api = {
     if (!text) invalid('Tên thẻ không được để trống.')
     if (text.length > LIMITS.tagName) invalid(`Tên thẻ tối đa ${LIMITS.tagName} ký tự.`)
     mutate((db) => {
-      if (db.tags.some((t) => !t.deleted && t.name.toLowerCase() === text.toLowerCase())) throw new ApiError(409, 'TAG_EXISTS', 'Thẻ này đã tồn tại.')
+      if (db.tags.some((t) => !t.deleted && t.name.toLowerCase() === text.toLowerCase())) throw new ApiError(409, 'TAG_ALREADY_EXISTS', 'Thẻ này đã tồn tại.')
       const id = uid('t')
       db.tags.push({ id, name: text, createdAt: now(), deleted: false })
-      audit(db, admin.id, 'CREATE_TAG', id, { tagName: text })
+      audit(db, admin.id, 'TAG_CREATED', id, { tagName: text })
     })
   },
   /** BR-17: không đổi tên; xoá thì nội dung cũ vẫn giữ tag. */
@@ -679,7 +695,7 @@ export const api = {
       const tag = db.tags.find((t) => t.id === id)
       if (!tag || tag.deleted) throw new ApiError(404, 'NOT_FOUND', 'Thẻ không tồn tại.')
       tag.deleted = true
-      audit(db, admin.id, 'DELETE_TAG', id, { tagName: tag.name })
+      audit(db, admin.id, 'TAG_DELETED', id, { tagName: tag.name })
     })
   },
 }

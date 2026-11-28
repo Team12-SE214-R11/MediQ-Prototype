@@ -338,7 +338,7 @@ export function AppLayout() {
 const ADMIN_NAV = [
   [{ to: '/admin', label: 'Tổng quan KPI', icon: LayoutDashboard, end: true }, { to: '/admin/verifications', label: 'Thẩm định BS', icon: ClipboardList, queue: 'dv' }, { to: '/admin/reports', label: 'Báo cáo VP', icon: Flag, queue: 'rp' }],
   [{ to: '/admin/accounts', label: 'Tài khoản', icon: Users }, { to: '/admin/tags', label: 'Danh mục Thẻ', icon: Tags }],
-  [{ to: '/admin/audit-logs', label: 'Audit Log', icon: FileSearch }],
+  [{ to: '/admin/audit-logs', label: 'Audit Log', icon: FileSearch }, { to: '/admin/security', label: 'Bảo mật tài khoản', icon: ShieldCheck }],
 ] as const
 
 export function AdminLayout() {

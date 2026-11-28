@@ -1,12 +1,12 @@
-import { BellOff, CheckCheck, Flag, MessageSquare, ShieldCheck } from 'lucide-react'
+import { BellOff, CheckCheck, Flag, MessageSquare, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button, EmptyState, SkeletonList, Tabs, toast, useFakeLoading } from '../components/ui'
 import { cn, timeAgo } from '../lib/utils'
 import { api, unreadCount, useCurrentUser, useDb } from '../mock/store'
-import type { Notification } from '../types'
+import type { Notification, NotificationType } from '../types'
 
-const ICON = { COMMENT: MessageSquare, REPLY: MessageSquare, VERIFICATION_APPROVED: ShieldCheck, VERIFICATION_REJECTED: ShieldCheck, VERIFICATION_REVOKED: ShieldCheck, REPORT_RESOLVED: Flag, REPORT_REJECTED: Flag, REPORT_AGAINST_YOU_RESOLVED: Flag }
+const ICON: Record<NotificationType, LucideIcon> = { COMMENT_ON_QUESTION: MessageSquare, COMMENT_ON_ARTICLE: MessageSquare, COMMENT_REPLY: MessageSquare, VERIFICATION_APPROVED: ShieldCheck, VERIFICATION_REJECTED: ShieldCheck, VERIFICATION_REVOKED: ShieldCheck, REPORT_CREATED: Flag, REPORT_RESOLVED: Flag, REPORT_REJECTED: Flag, REPORT_REOPENED: Flag, REPORT_AGAINST_YOU_RESOLVED: Flag }
 
 /** UC-NTF-004: bấm vào thì đánh dấu đã đọc trước, rồi mới điều hướng; đích đã xoá thì báo và không điều hướng. */
 export function NotificationItem({ n, onNavigate }: { n: Notification; onNavigate?: () => void }) {

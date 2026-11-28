@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, Check, ExternalLink, Info, Maximize2, Plus, RefreshCw, RotateCw, Search, ShieldAlert, Trash2, X, ZoomIn, ZoomOut } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, ExternalLink, Info, Maximize2, Plus, RefreshCw, RotateCw, Search, ShieldAlert, ShieldCheck, Trash2, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { Fragment, type ReactNode, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { ImageGrid, Lightbox, StatusBadge, TagChip } from '../components/domain'
@@ -532,5 +532,35 @@ export function AuditLogPage() {
       )}
       {paged.node}
     </>
+  )
+}
+
+// ---------- Bảo mật tài khoản Admin (WF-USR-05, SCR-S5 của Admin) ----------
+/** BR-02: Admin bắt buộc dùng 2FA nên chỉ có mục 2FA ở chế độ bắt buộc, không có nút tắt; không có Passkey, đổi mật khẩu hay xoá tài khoản (BR-24). */
+export function AdminSecurityPage() {
+  return (
+    <div>
+      <PageTitle>Bảo mật tài khoản</PageTitle>
+      <div className="max-w-3xl space-y-6">
+        <Card id="2fa">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-h4 font-semibold">Xác thực hai yếu tố (2FA TOTP)</h2>
+            <Badge tone="success" icon={<ShieldCheck className="size-4" aria-hidden />}>Bắt buộc · Đang bật</Badge>
+          </div>
+          <p className="mt-3 text-body-md text-neutral-700">
+            Tài khoản quản trị bắt buộc dùng 2FA (BR-02). 2FA được thiết lập khi khởi tạo hệ thống; mọi lần đăng nhập đều phải nhập mã 6 chữ số từ ứng dụng Authenticator sau bước mật khẩu, và không thể tắt.
+          </p>
+          <dl className="mt-4 grid grid-cols-1 gap-3 text-body-md md:grid-cols-2">
+            <div><dt className="text-neutral-500">Phương thức</dt><dd className="font-semibold">TOTP (RFC 6238)</dd></div>
+            <div><dt className="text-neutral-500">Mã xác thực</dt><dd className="font-semibold">6 chữ số, đổi mỗi 30 giây</dd></div>
+            <div><dt className="text-neutral-500">Trạng thái</dt><dd className="font-semibold">Đang bật, không thể tắt</dd></div>
+            <div><dt className="text-neutral-500">Đăng nhập</dt><dd className="font-semibold">Mật khẩu kèm TOTP</dd></div>
+          </dl>
+        </Card>
+        <InfoBox tone="info">
+          Tài khoản quản trị không dùng Passkey và không có mã khôi phục dự phòng cho 2FA. Mọi thay đổi về thông tin đăng nhập của Admin do người vận hành hệ thống thực hiện khi triển khai.
+        </InfoBox>
+      </div>
+    </div>
   )
 }

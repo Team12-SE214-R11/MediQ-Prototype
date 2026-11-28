@@ -95,8 +95,8 @@ export function RegisterPage() {
       <Heading title="Tạo tài khoản MediQ">Cộng đồng hỏi đáp y tế an toàn, có bác sĩ xác minh.</Heading>
       <div className="space-y-6">
         {error && <ErrorBanner message={error.message} />}
-        <TextInput label="Email" required type="email" inputMode="email" autoComplete="email" placeholder="ten@example.com" value={f.email} onChange={set('email')} error={show('email') ?? (error?.code === 'EMAIL_TAKEN' ? error.message : null)} hint="Email không thể thay đổi sau khi đăng ký." />
-        <TextInput label="Tên đăng nhập (Username)" required autoComplete="username" prefix={<AtSign className="size-4" />} value={f.username} onChange={set('username')} error={show('username') ?? (error?.code === 'USERNAME_TAKEN' ? error.message : null)} hint="3–50 ký tự: chữ không dấu, số, . _ -  Không thể thay đổi sau khi đăng ký." />
+        <TextInput label="Email" required type="email" inputMode="email" autoComplete="email" placeholder="ten@example.com" value={f.email} onChange={set('email')} error={show('email') ?? (error?.code === 'EMAIL_ALREADY_EXISTS' ? error.message : null)} hint="Email không thể thay đổi sau khi đăng ký." />
+        <TextInput label="Tên đăng nhập (Username)" required autoComplete="username" prefix={<AtSign className="size-4" />} value={f.username} onChange={set('username')} error={show('username') ?? (error?.code === 'USERNAME_ALREADY_EXISTS' ? error.message : null)} hint="3–50 ký tự: chữ không dấu, số, . _ -  Không thể thay đổi sau khi đăng ký." />
         <TextInput label="Tên hiển thị" required autoComplete="name" value={f.displayName} onChange={set('displayName')} max={LIMITS.displayName} error={show('displayName')} />
         <div>
           <PasswordInput label="Mật khẩu" value={f.password} onChange={(v) => setF({ ...f, password: v })} error={show('password')} autoComplete="new-password" />

@@ -194,16 +194,16 @@ export function createSeed(): Database {
       { id: 'RP-110', reporterId: 'u-lan', targetType: 'account', targetId: 'u-99', category: 'Giả mạo hoặc lừa đảo', severity: 'HIGH', reason: 'Tài khoản chuyên đăng bài bán thuốc.', status: 'PENDING', createdAt: ago(2 * H), handledBy: null },
     ],
     notifications: [
-      { id: 'n-1', accountId: 'u-lan', type: 'COMMENT', actorId: 'u-tuan', title: 'BS.CKI Trần Minh Tuấn đã bình luận về câu hỏi của bạn', excerpt: 'Sốt 2–3 ngày rồi nổi ban khi đã hết sốt, bé vẫn chơi và ăn được là diễn tiến điển hình…', link: '/questions/q-1', read: false, createdAt: ago(3 * H) },
-      { id: 'n-2', accountId: 'u-lan', type: 'REPLY', actorId: 'u-tuan', title: 'BS.CKI Trần Minh Tuấn đã trả lời bình luận của bạn', excerpt: 'Không cần kiêng tắm chị nhé. Tắm nước ấm, lau khô nhẹ nhàng…', link: '/questions/q-1', read: false, createdAt: ago(2 * H) },
-      { id: 'n-3', accountId: 'u-lan', type: 'COMMENT', actorId: 'u-an', title: 'BS.CKII Nguyễn Văn An đã bình luận về câu hỏi của bạn', excerpt: 'Với đường huyết đói 6,4 mmol/L và HbA1c 6,1%, cô thuộc nhóm tiền đái tháo đường…', link: '/questions/q-3', read: true, createdAt: ago(2 * D) },
+      { id: 'n-1', accountId: 'u-lan', type: 'COMMENT_ON_QUESTION', actorId: 'u-tuan', title: 'BS.CKI Trần Minh Tuấn đã bình luận về câu hỏi của bạn', excerpt: 'Sốt 2–3 ngày rồi nổi ban khi đã hết sốt, bé vẫn chơi và ăn được là diễn tiến điển hình…', link: '/questions/q-1', read: false, createdAt: ago(3 * H) },
+      { id: 'n-2', accountId: 'u-lan', type: 'COMMENT_REPLY', actorId: 'u-tuan', title: 'BS.CKI Trần Minh Tuấn đã trả lời bình luận của bạn', excerpt: 'Không cần kiêng tắm chị nhé. Tắm nước ấm, lau khô nhẹ nhàng…', link: '/questions/q-1', read: false, createdAt: ago(2 * H) },
+      { id: 'n-3', accountId: 'u-lan', type: 'COMMENT_ON_QUESTION', actorId: 'u-an', title: 'BS.CKII Nguyễn Văn An đã bình luận về câu hỏi của bạn', excerpt: 'Với đường huyết đói 6,4 mmol/L và HbA1c 6,1%, cô thuộc nhóm tiền đái tháo đường…', link: '/questions/q-3', read: true, createdAt: ago(2 * D) },
       { id: 'n-4', accountId: 'u-tuan', type: 'VERIFICATION_APPROVED', actorId: null, title: 'Hồ sơ xác minh bác sĩ đã được phê duyệt', excerpt: 'Tài khoản của bạn đã được cấp quyền Verified Doctor.', link: '/doctor-verification/status', read: true, createdAt: ago(41 * D) },
       { id: 'n-5', accountId: 'u-ha', type: 'VERIFICATION_REJECTED', actorId: null, title: 'Hồ sơ xác minh bác sĩ bị từ chối', excerpt: 'Ảnh chụp chứng chỉ hành nghề bị mờ số hiệu…', link: '/doctor-verification/status', read: false, createdAt: ago(3 * D) },
     ],
     auditLogs: [
       { id: 'al-3', actorId: 'u-admin', action: 'VERIFICATION_REJECTED', target: 'DV-042', metadata: { reason: 'Ảnh CCHN bị mờ số hiệu' }, createdAt: ago(3 * D) },
       { id: 'al-2', actorId: 'u-admin', action: 'VERIFICATION_APPROVED', target: 'DV-041', metadata: { license: '012345/HCM-CCHN' }, createdAt: ago(41 * D) },
-      { id: 'al-1', actorId: 'u-admin', action: 'CREATE_TAG', target: 't-hohap', metadata: { tagName: 'Hô hấp' }, createdAt: ago(45 * D) },
+      { id: 'al-1', actorId: 'u-admin', action: 'TAG_CREATED', target: 't-hohap', metadata: { tagName: 'Hô hấp' }, createdAt: ago(45 * D) },
     ],
   }
 }

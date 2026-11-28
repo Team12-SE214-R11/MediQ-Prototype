@@ -3,7 +3,7 @@
 export type Role = 'NORMAL_USER' | 'VERIFIED_DOCTOR' | 'ADMIN'
 export type AccountStatus = 'UNVERIFIED' | 'ACTIVE' | 'SUSPENDED' | 'DELETED'
 export type ContentStatus = 'ACTIVE' | 'DELETED'
-export type VerificationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED'
+export type VerificationStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'REVOKED' | 'CANCELLED'
 export type VerificationType = 'NEW' | 'RESUBMISSION' | 'UPDATE'
 export type ReportStatus = 'PENDING' | 'REVIEWING' | 'RESOLVED' | 'REJECTED'
 export type ReportTargetType = 'question' | 'article' | 'comment' | 'account'
@@ -46,7 +46,7 @@ export interface DoctorProfile {
 
 export interface VerificationEvent {
   at: string
-  action: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'REVOKED' | 'REOPENED'
+  action: 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'REVOKED' | 'CANCELLED' | 'REOPENED'
   status: VerificationStatus
   note: string
 }
@@ -139,14 +139,18 @@ export interface Report {
   handledBy: string | null
 }
 
+// Giá trị `type` trùng wire value của API-NTF-01 (OpenAPI paths/notifications.yaml).
 export type NotificationType =
-  | 'COMMENT'
-  | 'REPLY'
+  | 'COMMENT_ON_QUESTION'
+  | 'COMMENT_ON_ARTICLE'
+  | 'COMMENT_REPLY'
   | 'VERIFICATION_APPROVED'
   | 'VERIFICATION_REJECTED'
   | 'VERIFICATION_REVOKED'
+  | 'REPORT_CREATED'
   | 'REPORT_RESOLVED'
   | 'REPORT_REJECTED'
+  | 'REPORT_REOPENED'
   | 'REPORT_AGAINST_YOU_RESOLVED'
 
 export interface Notification {

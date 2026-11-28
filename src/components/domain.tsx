@@ -445,6 +445,7 @@ const STATUS: Record<string, { label: string; tone: Tone }> = {
   APPROVED: { label: 'Đã phê duyệt', tone: 'success' },
   REJECTED: { label: 'Bị từ chối', tone: 'danger' },
   REVOKED: { label: 'Đã thu hồi', tone: 'neutral' },
+  CANCELLED: { label: 'Đã huỷ', tone: 'neutral' },
   RESOLVED: { label: 'Đã giải quyết', tone: 'success' },
   ACTIVE: { label: 'Đang hoạt động', tone: 'success' },
   SUSPENDED: { label: 'Tạm khoá', tone: 'danger' },
